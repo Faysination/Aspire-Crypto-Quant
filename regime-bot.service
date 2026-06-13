@@ -1,0 +1,26 @@
+[Unit]
+Description=Zoya Regime-Adaptive Trading Bot
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/regime_bot
+EnvironmentFile=/home/ec2-user/regime_bot/.env
+
+# Start the Flask dashboard (which launches the bot internally)
+ExecStart=/home/ec2-user/regime_bot/venv/bin/python dashboard_api.py
+
+Restart=on-failure
+RestartSec=15
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=regime-bot
+
+# Resource limits — be nice to the free tier t2.micro
+MemoryMax=350M
+CPUQuota=60%
+
+[Install]
+WantedBy=multi-user.target

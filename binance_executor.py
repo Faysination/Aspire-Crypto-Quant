@@ -159,6 +159,26 @@ class PortfolioBot:
             return [self.cfg.SYMBOL]
 
     def _tick(self):
+        if getattr(self, "last_stop_check", 0) == 0:
+            self.last_stop_check = 0
+
+        # --- HIGH FREQUENCY STOP-LOSS / TIME LIMIT CHECK ---
+        if self.positions and time.time() - self.last_stop_check > 2.0:
+            self.last_stop_check = time.time()
+            try:
+                # Fetch live tickers for open positions
+                active_syms = list(self.positions.keys())
+                tickers = self.exchange.fetch_tickers(active_syms)
+                for sym, pos in list(self.positions.items()):
+                    if not self.running: break
+                    ticker = tickers.get(sym) or tickers.get(f"{sym}:USDT")
+                    if ticker and ticker.get('last'):
+                        engine_state = self.engines[sym].state if sym in self.engines else None
+                        self._check_exit(sym, engine_state, float(ticker['last']))
+            except Exception as e:
+                logger.error(f"High-frequency stop check failed: {e}")
+
+        # --- LOW FREQUENCY PORTFOLIO SCANNER ---
         if self.cfg.USE_FUTURES and not self.cfg.PAPER:
             self._sync_positions()
         
@@ -428,13 +448,38 @@ class PortfolioBot:
             for sym in tracked_symbols:
                 if sym not in active_symbols:
                     pos = self.positions.pop(sym)
-                    pnl = pos.pnl(pos.entry) # We don't know the exact exit price
-                    self.trade_log.append({
+                    
+                    # Estimate exit price using closed orders
+                    exit_price = pos.entry
+                    reason = "CLOSED_EXTERNALLY"
+                    try:
+                        orders = self.exchange.fetch_closed_orders(sym, limit=3)
+                        if orders:
+                            latest = orders[-1]
+                            exit_price = float(latest.get('average') or latest.get('price') or pos.entry)
+                            reason = "NATIVE_EXCHANGE_EXECUTION"
+                    except:
+                        pass
+                    
+                    pnl = pos.pnl(exit_price)
+                    
+                    trade_dict = {
                         **pos.to_dict(),
-                        "exit": pos.entry, "pnl": 0.0, "reason": "CLOSED_EXTERNALLY",
+                        "exit": exit_price, "pnl": round(pnl, 4), "reason": reason,
                         "closed_at": datetime.now(timezone.utc).isoformat()
-                    })
-                    log_activity(f"SYNC: {sym} was closed externally.")
+                    }
+                    self.trade_log.append(trade_dict)
+                    
+                    if pnl < 0:
+                        self.loss_cooldowns[sym] = time.time()
+                    
+                    try:
+                        import trade_db
+                        trade_db.insert_trades([trade_dict])
+                    except:
+                        pass
+
+                    log_activity(f"SYNC: {sym} closed externally | PnL: {pnl:+.4f} USDT")
         except Exception as e:
             pass
 

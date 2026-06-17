@@ -3,217 +3,273 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aspire Crypto Quant - Binance Auto Trade Bot</title>
+    <title>Aspire Crypto Quant - Analytics Suite</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
+    <!-- Chart.js for FX Blue Style Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   </head>
   <body>
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
-    <div class="container">
-      <header class="header">
-        <div>
-          <h1 class="logo">Aspire Crypto <span>Quant</span></h1>
-          <p class="subtitle">for <span style="color:#F3BA2F">Binance</span> Spot and Futures </p>
-        </div>
-        
-        <div class="top-controls glass">
-          <div class="control-group">
-            <label>Mode</label>
-            <div class="toggle-switch">
-              <input type="checkbox" id="auto-portfolio-toggle">
-              <label for="auto-portfolio-toggle" class="toggle-label">
-                <span class="left">Single</span>
-                <span class="right">Portfolio</span>
-                <span class="slider"></span>
-              </label>
-            </div>
-          </div>
+    
+    <!-- Top Navigation Bar -->
+    <nav class="navbar glass">
+      <div class="nav-brand">
+        <h1 class="logo">Aspire Crypto <span>Quant</span></h1>
+      </div>
+      
+      <div class="nav-links">
+        <button id="tab-dashboard" class="nav-btn active">Live Dashboard</button>
+        <button id="tab-analytics" class="nav-btn">Analytics Suite</button>
+        <button id="profile-btn" class="nav-btn btn-assets">👤 Assets</button>
+      </div>
 
-          <div class="control-group">
-            <label>Symbol</label>
-            <select id="symbol-select" class="input-select">
-              <option value="BTC/USDT">BTC/USDT</option>
-              <option value="ETH/USDT">ETH/USDT</option>
-              <option value="SOL/USDT">SOL/USDT</option>
-              <option value="BNB/USDT">BNB/USDT</option>
-              <option value="XRP/USDT">XRP/USDT</option>
-              <option value="ADA/USDT">ADA/USDT</option>
-              <option value="DOGE/USDT">DOGE/USDT</option>
-              <option value="AVAX/USDT">AVAX/USDT</option>
-              <option value="LINK/USDT">LINK/USDT</option>
-              <option value="DOT/USDT">DOT/USDT</option>
-            </select>
-          </div>
-
-          <div class="control-group">
-            <label>Market</label>
-            <div class="toggle-switch">
-              <input type="checkbox" id="futures-toggle">
-              <label for="futures-toggle" class="toggle-label">
-                <span class="left">Spot</span>
-                <span class="right">Futures</span>
-                <span class="slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <div class="control-group">
-            <label>Execution</label>
-            <div class="toggle-switch danger-toggle">
-              <input type="checkbox" id="live-toggle">
-              <label for="live-toggle" class="toggle-label">
-                <span class="left">Paper</span>
-                <span class="right">Live</span>
-                <span class="slider"></span>
-              </label>
-            </div>
+      <div class="top-controls">
+        <div class="control-group">
+          <label>Mode</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="auto-portfolio-toggle">
+            <label for="auto-portfolio-toggle" class="toggle-label">
+              <span class="left">Single Pair</span>
+              <span class="right">Full Market</span>
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
 
-        <div class="status-badge" style="margin-left: 1rem; margin-right: 1rem; background: var(--glass-bg); border: 1px solid var(--border-color); border-radius: 20px; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span style="font-size: 0.8rem; color: #94a3b8; text-transform: uppercase;">Sharpe:</span>
-          <span id="sharpe-ratio" style="font-weight: 600; font-family: var(--font-display);">0.00</span>
+        <div class="control-group" id="symbol-select-group">
+          <label>Symbol</label>
+          <select id="symbol-select" class="input-select">
+            <option value="BTC/USDT">BTC/USDT</option>
+            <option value="ETH/USDT">ETH/USDT</option>
+            <option value="SOL/USDT">SOL/USDT</option>
+            <option value="BNB/USDT">BNB/USDT</option>
+            <option value="XRP/USDT">XRP/USDT</option>
+          </select>
         </div>
-        <div class="status-badge" id="bot-status">
+
+        <div class="control-group">
+          <label>Market</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="futures-toggle">
+            <label for="futures-toggle" class="toggle-label">
+              <span class="left">Spot</span>
+              <span class="right">Futures</span>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Execution</label>
+          <div class="toggle-switch danger-toggle">
+            <input type="checkbox" id="live-toggle">
+            <label for="live-toggle" class="toggle-label">
+              <span class="left">Demo</span>
+              <span class="right">Live</span>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="status-badge" id="bot-status" style="margin-left: 1rem;">
           <div class="indicator pulse"></div>
           <span>Connecting...</span>
         </div>
-        
-        <button id="profile-btn" class="glass" style="margin-left: 1rem; border: none; padding: 0.5rem 1rem; cursor: pointer; border-radius: var(--radius-sm); color: white;">
-          👤 Assets
-        </button>
-      </header>
-      
-      <!-- Sliding Assets Sidebar -->
-      <div id="assets-sidebar" class="sidebar">
-        <div class="sidebar-header">
-          <h3>Your Assets</h3>
-          <button id="close-sidebar-btn" class="glass" style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.2rem;">✖</button>
-        </div>
-        <div class="wallet-section">
-          <h4 class="wallet-title">Spot Wallet</h4>
-          <div class="account-grid" id="spot-grid">
-            <div class="loading">Loading...</div>
+      </div>
+    </nav>
+
+    <!-- Sliding Assets Sidebar -->
+    <div id="assets-sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <h3>Your Assets</h3>
+        <button id="close-sidebar-btn" class="glass" style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.2rem;">✖</button>
+      </div>
+      <div class="wallet-section">
+        <h4 class="wallet-title">Spot Wallet</h4>
+        <div class="account-grid" id="spot-grid"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="wallet-section" style="margin-top: 1rem;">
+        <h4 class="wallet-title">Futures Wallet</h4>
+        <div class="account-grid" id="fut-grid"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="wallet-section" style="margin-top: 2rem;">
+        <h4 class="wallet-title">Risk Settings</h4>
+        <div style="display: flex; flex-direction: column; gap: 0.8rem; padding: 0.5rem 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; color: #cbd5e1;">Hard Stop ($)</span>
+            <input type="number" id="setting-hard-stop" step="1" style="width: 80px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: white; border-radius: 4px; padding: 4px 8px; text-align: right; font-family: var(--font-mono);">
           </div>
-        </div>
-        <div class="wallet-section" style="margin-top: 1rem;">
-          <h4 class="wallet-title">Futures Wallet</h4>
-          <div class="account-grid" id="fut-grid">
-            <div class="loading">Loading...</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; color: #cbd5e1;">Time Limit (Mins)</span>
+            <input type="number" id="setting-time-limit" step="1" style="width: 80px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: white; border-radius: 4px; padding: 4px 8px; text-align: right; font-family: var(--font-mono);">
           </div>
-        </div>
-        <div class="wallet-section" style="margin-top: 2rem;">
-          <h4 class="wallet-title">Risk Settings</h4>
-          <div style="display: flex; flex-direction: column; gap: 0.8rem; padding: 0.5rem 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 0.85rem; color: #cbd5e1;">Hard Stop ($)</span>
-              <input type="number" id="setting-hard-stop" step="1" style="width: 80px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: white; border-radius: 4px; padding: 4px 8px; text-align: right; font-family: var(--font-mono);">
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 0.85rem; color: #cbd5e1;">Time Limit (Mins)</span>
-              <input type="number" id="setting-time-limit" step="1" style="width: 80px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: white; border-radius: 4px; padding: 4px 8px; text-align: right; font-family: var(--font-mono);">
-            </div>
-            <button id="btn-apply-settings" class="btn" style="width: 100%; margin-top: 0.5rem; background: var(--border-color); color: white; justify-content: center;">Apply Settings</button>
-          </div>
+          <button id="btn-apply-settings" class="btn" style="width: 100%; margin-top: 0.5rem; background: var(--border-color); color: white; justify-content: center;">Apply Settings</button>
         </div>
       </div>
+    </div>
 
-      <div class="main-grid">
-        <div class="left-col">
-          <!-- Account Balances removed from here, now in sidebar -->
+    <!-- MAIN CONTAINER (Full Width) -->
+    <div class="container full-width" style="margin-top: 80px;">
+      
+      <!-- ================= LIVE DASHBOARD TAB ================= -->
+      <div id="view-dashboard">
+        <div class="main-grid">
+          <div class="left-col">
+            <!-- Chart -->
+            <div class="glass card chart-container">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="card-title" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                  Live Market
+                  <select id="chart-symbol-select" class="input-select" style="margin-left: 0.5rem; background: transparent; color: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.2rem 0.5rem;">
+                    <option value="BTC/USDT">BTC/USDT</option>
+                    <option value="ETH/USDT">ETH/USDT</option>
+                  </select>
+                </h3>
+                <div class="manual-trade-group">
+                  <button id="btn-buy" class="btn btn-buy">Buy (Long)</button>
+                  <button id="btn-sell" class="btn btn-sell">Sell (Short)</button>
+                </div>
+              </div>
+              <div class="chart-wrapper" id="candleChart"></div>
+            </div>
+          </div>
 
-          <!-- Chart -->
-          <div class="glass card chart-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 class="card-title" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                Live Market
-                <select id="chart-symbol-select" class="input-select" style="margin-left: 0.5rem; background: transparent; color: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.2rem 0.5rem;">
-                  <option value="BTC/USDT">BTC/USDT</option>
-                  <option value="ETH/USDT">ETH/USDT</option>
-                  <option value="SOL/USDT">SOL/USDT</option>
-                  <option value="BNB/USDT">BNB/USDT</option>
-                  <option value="XRP/USDT">XRP/USDT</option>
-                  <option value="ADA/USDT">ADA/USDT</option>
-                  <option value="DOGE/USDT">DOGE/USDT</option>
-                  <option value="AVAX/USDT">AVAX/USDT</option>
-                  <option value="LINK/USDT">LINK/USDT</option>
-                  <option value="DOT/USDT">DOT/USDT</option>
-                  <option value="BCH/USDT">BCH/USDT</option>
-                  <option value="FXS/USDT">FXS/USDT</option>
-                  <option value="FIS/USDT">FIS/USDT</option>
-                  <option value="PORT3/USDT">PORT3/USDT</option>
-                  <option value="LAB/USDT">LAB/USDT</option>
+          <div class="right-col">
+            <!-- Active Trades -->
+            <div class="glass card positions-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="card-title" style="margin: 0;">Active Trades</h3>
+                <select id="active-sort-select" class="input-select" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; background: transparent;">
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="profit-high">Profit (High)</option>
+                  <option value="profit-low">Profit (Low)</option>
                 </select>
-                15m
-              </h3>
-              <div class="manual-trade-group">
-                <button id="btn-buy" class="btn btn-buy">Buy (Long)</button>
-                <button id="btn-sell" class="btn btn-sell">Sell (Short)</button>
+              </div>
+              <div id="positions-list" class="active-trades-container">
+                <div class="loading">No active positions</div>
               </div>
             </div>
-            <div class="chart-wrapper" id="candleChart"></div>
           </div>
         </div>
 
-        <div class="right-col">
-          <!-- Active Trades -->
-          <div class="glass card positions-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 class="card-title" style="margin: 0;">Active Trades</h3>
-              <select id="active-sort-select" class="input-select" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; background: transparent;">
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-                <option value="profit-high">Profit (High)</option>
-                <option value="profit-low">Profit (Low)</option>
-              </select>
-            </div>
-            <div id="positions-list" class="active-trades-container">
-              <div class="loading">No active positions</div>
-            </div>
+        <!-- Indicators and Performance -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+          <div class="glass card indicators-card" style="margin-bottom: 0;">
+            <h3 class="card-title">Main Indicators</h3>
+            <ul class="indicators-list">
+              <li><span>Regime</span><span id="ind-regime" class="ind-val highlight">--</span></li>
+              <li><span>ADX</span><span id="ind-adx" class="ind-val">0.00</span></li>
+              <li><span>RSI</span><span id="ind-rsi" class="ind-val">0.00</span></li>
+              <li><span>ATR %</span><span id="ind-atr" class="ind-val">0.00%</span></li>
+            </ul>
+          </div>
+          <div class="glass card performance-card" style="margin-bottom: 0;">
+            <h3 class="card-title">Performance</h3>
+            <ul class="indicators-list">
+              <li><span>Margin Balance</span><span id="perf-equity" class="ind-val highlight">--</span></li>
+              <li><span>Unrealized PnL</span><span id="perf-pnl" class="ind-val">--</span></li>
+              <li><span>Total Trades</span><span id="perf-count" class="ind-val">0</span></li>
+            </ul>
           </div>
         </div>
-      </div>
 
-      <!-- Indicators and Performance (50% each) -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
-        <!-- Technical Indicators (Main Symbol) -->
-        <div class="glass card indicators-card" style="margin-bottom: 0;">
-          <h3 class="card-title">Main Indicators</h3>
-          <ul class="indicators-list">
-            <li><span>Regime</span><span id="ind-regime" class="ind-val highlight">--</span></li>
-            <li><span>ADX</span><span id="ind-adx" class="ind-val">0.00</span></li>
-            <li><span>RSI</span><span id="ind-rsi" class="ind-val">0.00</span></li>
-            <li><span>ATR %</span><span id="ind-atr" class="ind-val">0.00%</span></li>
-          </ul>
-        </div>
-
-        <!-- Performance / P&L -->
-        <div class="glass card performance-card" style="margin-bottom: 0;">
-          <h3 class="card-title">Performance</h3>
-          <ul class="indicators-list">
-            <li><span>Margin Balance</span><span id="perf-equity" class="ind-val highlight">--</span></li>
-            <li><span>Unrealized PnL</span><span id="perf-pnl" class="ind-val">--</span></li>
-            <li><span>Total Trades</span><span id="perf-count" class="ind-val">0</span></li>
-          </ul>
+        <div class="glass card console-card" style="margin-top: 1.5rem;">
+          <h3 class="card-title">Live Activity</h3>
+          <div class="console-window" id="console-window" style="min-height: 200px; max-height: 300px;"></div>
         </div>
       </div>
+      <!-- ================= END LIVE DASHBOARD ================= -->
 
-      <!-- Activity Log Console (Full Width) -->
-      <div class="glass card console-card" style="margin-top: 1.5rem;">
-        <h3 class="card-title">Live Activity</h3>
-        <div class="console-window" id="console-window" style="min-height: 200px; max-height: 300px;">
-          <!-- Logs populated here -->
+      <!-- ================= ANALYTICS SUITE TAB ================= -->
+      <div id="view-analytics" style="display: none;">
+        <div class="analytics-nav glass">
+          <button class="analytics-tab-btn active" data-target="overview">Overview</button>
+          <button class="analytics-tab-btn" data-target="analysis">Analysis</button>
+          <button class="analytics-tab-btn" data-target="stats">Stats</button>
+          <button class="analytics-tab-btn" data-target="risk">Risk</button>
+        </div>
+
+        <div class="analytics-content">
+          <!-- Overview Tab -->
+          <div id="analytics-overview" class="analytics-subtab">
+            <div class="analytics-grid">
+              <div class="glass card chart-container" style="grid-column: span 2;">
+                <h3 class="card-title">Cumulative Equity Curve</h3>
+                <div style="position: relative; height: 350px;">
+                  <canvas id="chart-equity"></canvas>
+                </div>
+              </div>
+              <div class="glass card chart-container">
+                <h3 class="card-title">Symbol Distribution</h3>
+                <div style="position: relative; height: 350px; display: flex; justify-content: center;">
+                  <canvas id="chart-symbols"></canvas>
+                </div>
+              </div>
+              <div class="glass card chart-container">
+                <h3 class="card-title">Duration vs Profitability</h3>
+                <div style="position: relative; height: 350px;">
+                  <canvas id="chart-scatter"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analysis Tab -->
+          <div id="analytics-analysis" class="analytics-subtab" style="display: none;">
+            <div class="analytics-grid">
+              <div class="glass card chart-container" style="grid-column: span 2;">
+                <h3 class="card-title">Net Profit by Market</h3>
+                <div style="position: relative; height: 400px;">
+                  <canvas id="chart-profit-symbol"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats Tab -->
+          <div id="analytics-stats" class="analytics-subtab" style="display: none;">
+            <div class="glass card">
+              <h3 class="card-title">Institutional Statistics</h3>
+              <div class="stats-dense-grid" id="stats-container">
+                <div class="loading">Loading Stats...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Risk Tab -->
+          <div id="analytics-risk" class="analytics-subtab" style="display: none;">
+            <div class="analytics-grid">
+              <div class="glass card">
+                <h3 class="card-title">Risk Profile</h3>
+                <ul class="indicators-list" id="risk-container">
+                  <div class="loading">Loading Risk Profile...</div>
+                </ul>
+              </div>
+              <div class="glass card chart-container" style="grid-column: span 2;">
+                <h3 class="card-title">Historic Returns Distribution</h3>
+                <div style="position: relative; height: 350px;">
+                  <canvas id="chart-returns-hist"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
+      <!-- ================= END ANALYTICS SUITE ================= -->
 
-      <!-- Trade History -->
+      <!-- Trade History (Shared globally at the bottom) -->
       <div class="glass card history-card" style="margin-top: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
           <h3 class="card-title" style="margin-bottom: 0;">TRADE HISTORY</h3>
-          <div class="trade-controls" style="display: flex; gap: 10px; align-items: center;">
+          <div class="trade-controls" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button id="btn-export-csv" class="btn" style="background: var(--blue); color: white;">📥 Export CSV</button>
             <button id="btn-reset-history" class="btn btn-force-close" style="padding: 0.2rem 0.5rem;">Reset History</button>
             <input type="date" id="trade-start-date" class="input-select" style="padding: 4px;">
             <span style="color: #94a3b8;">to</span>
@@ -245,6 +301,7 @@
           <button id="btn-next-page" class="glass" style="padding: 4px 12px; cursor: pointer;" disabled>Next ▶</button>
         </div>
       </div>
+      
     </div>
     
     <footer class="footer">

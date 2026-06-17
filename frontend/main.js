@@ -480,3 +480,195 @@ if (el.btnApplySettings) {
 fetchSettings();
 refreshAll();
 setInterval(refreshAll, 5000);
+
+// ==========================================
+// NEW: Analytics & Navigation Logic
+// ==========================================
+
+const tabDashboard = document.getElementById('tab-dashboard');
+const tabAnalytics = document.getElementById('tab-analytics');
+const viewDashboard = document.getElementById('view-dashboard');
+const viewAnalytics = document.getElementById('view-analytics');
+
+if (tabDashboard && tabAnalytics) {
+  tabDashboard.addEventListener('click', () => {
+    tabDashboard.classList.add('active');
+    tabAnalytics.classList.remove('active');
+    viewDashboard.style.display = 'block';
+    viewAnalytics.style.display = 'none';
+  });
+
+  tabAnalytics.addEventListener('click', () => {
+    tabAnalytics.classList.add('active');
+    tabDashboard.classList.remove('active');
+    viewAnalytics.style.display = 'block';
+    viewDashboard.style.display = 'none';
+    loadAnalytics(); // Load data when opened
+  });
+}
+
+// Analytics Sub-Tabs
+document.querySelectorAll('.analytics-tab-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.analytics-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.analytics-subtab').forEach(t => t.style.display = 'none');
+    e.target.classList.add('active');
+    document.getElementById('analytics-' + e.target.dataset.target).style.display = 'block';
+  });
+});
+
+// CSV Export
+const btnExportCsv = document.getElementById('btn-export-csv');
+if (btnExportCsv) {
+  btnExportCsv.addEventListener('click', () => {
+    window.open(API + '/history/csv', '_blank');
+  });
+}
+
+// Chart.js Instances
+let charts = {};
+
+function initChart(id, type, options = {}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return null;
+  if (charts[id]) charts[id].destroy();
+  
+  Chart.defaults.color = '#94a3b8';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  
+  charts[id] = new Chart(ctx, {
+    type: type,
+    data: { datasets: [] },
+    options: Object.assign({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } }
+    }, options)
+  });
+  return charts[id];
+}
+
+async function loadAnalytics() {
+  const data = await get('/analytics');
+  if (!data || data.error) return;
+  
+  // 1. Stats Dense Grid
+  const statsDiv = document.getElementById('stats-container');
+  if (statsDiv) {
+    statsDiv.innerHTML = `
+      <div class="stat-box"><span class="label">Total Trades</span><span class="val">${data.stats.total_trades}</span></div>
+      <div class="stat-box"><span class="label">Win Rate</span><span class="val">${data.stats.win_rate}%</span></div>
+      <div class="stat-box"><span class="label">Net Profit</span><span class="val ${data.stats.net_profit >= 0 ? 'positive' : 'negative'}">$${data.stats.net_profit}</span></div>
+      <div class="stat-box"><span class="label">Profit Factor</span><span class="val">${data.stats.profit_factor}</span></div>
+      <div class="stat-box"><span class="label">Max Drawdown</span><span class="val negative">-$${data.stats.max_drawdown}</span></div>
+      <div class="stat-box"><span class="label">Longest Win Streak</span><span class="val positive">${data.stats.longest_win_streak}</span></div>
+      <div class="stat-box"><span class="label">Avg Win Duration</span><span class="val">${data.stats.avg_win_duration_hrs} hr</span></div>
+      <div class="stat-box"><span class="label">Gross Profit</span><span class="val positive">$${data.stats.gross_profit}</span></div>
+    `;
+  }
+
+  // 2. Risk Profile
+  const riskDiv = document.getElementById('risk-container');
+  if (riskDiv) {
+    riskDiv.innerHTML = `
+      <li><span>Max Drawdown %</span><span class="ind-val text-red">-${data.risk.max_drawdown_pct}%</span></li>
+      <li><span>Worst Day PnL</span><span class="ind-val text-red">-$${data.risk.worst_day}</span></li>
+      <li><span>Longest Loss Streak</span><span class="ind-val text-red">${data.stats.longest_loss_streak}</span></li>
+      <li><span>Avg Loss Duration</span><span class="ind-val">${data.stats.avg_loss_duration_hrs} hr</span></li>
+    `;
+  }
+
+  // 3. Render Equity Curve
+  const cEquity = initChart('chart-equity', 'line', {
+    scales: { 
+      x: { type: 'time', time: { unit: 'day' } },
+      y: { title: { display: true, text: 'Simulated Equity ($)' } }
+    }
+  });
+  if (cEquity && data.overview.equity_curve) {
+    cEquity.data = {
+      datasets: [{
+        label: 'Equity Curve',
+        data: data.overview.equity_curve.map(d => ({x: d.time, y: d.value})),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.1
+      }]
+    };
+    cEquity.update();
+  }
+
+  // 4. Render Symbol Distribution (Pie)
+  const cSyms = initChart('chart-symbols', 'doughnut');
+  if (cSyms && data.overview.symbols) {
+    const labels = Object.keys(data.overview.symbols);
+    const vals = Object.values(data.overview.symbols);
+    cSyms.data = {
+      labels: labels,
+      datasets: [{
+        data: vals,
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+        borderWidth: 0
+      }]
+    };
+    cSyms.update();
+  }
+
+  // 5. Scatter Plot
+  const cScatter = initChart('chart-scatter', 'scatter', {
+    scales: {
+      x: { title: { display: true, text: 'Hold Duration (Hours)' } },
+      y: { title: { display: true, text: 'PnL ($)' } }
+    }
+  });
+  if (cScatter && data.overview.scatter) {
+    const winners = data.overview.scatter.filter(d => d.y >= 0);
+    const losers = data.overview.scatter.filter(d => d.y < 0);
+    cScatter.data = {
+      datasets: [
+        { label: 'Winners', data: winners, backgroundColor: '#10b981' },
+        { label: 'Losers', data: losers, backgroundColor: '#ef4444' }
+      ]
+    };
+    cScatter.update();
+  }
+
+  // 6. Net Profit by Symbol (Bar)
+  const cProfitBar = initChart('chart-profit-symbol', 'bar');
+  if (cProfitBar && data.analysis.profit_by_symbol) {
+    const labels = Object.keys(data.analysis.profit_by_symbol);
+    const vals = Object.values(data.analysis.profit_by_symbol);
+    const bgColors = vals.map(v => v >= 0 ? '#10b981' : '#ef4444');
+    cProfitBar.data = {
+      labels: labels,
+      datasets: [{
+        label: 'Net Profit ($)',
+        data: vals,
+        backgroundColor: bgColors,
+        borderRadius: 4
+      }]
+    };
+    cProfitBar.update();
+  }
+
+  // 7. Returns Histogram
+  const cHist = initChart('chart-returns-hist', 'bar', {
+    scales: { y: { title: { display: true, text: 'Frequency (Days)' } } }
+  });
+  if (cHist && data.risk.returns_histogram) {
+    const sortedKeys = Object.keys(data.risk.returns_histogram).sort((a,b) => parseFloat(a) - parseFloat(b));
+    const vals = sortedKeys.map(k => data.risk.returns_histogram[k]);
+    cHist.data = {
+      labels: sortedKeys,
+      datasets: [{
+        label: 'Daily Returns %',
+        data: vals,
+        backgroundColor: '#8b5cf6',
+        borderRadius: 4
+      }]
+    };
+    cHist.update();
+  }
+}
+
